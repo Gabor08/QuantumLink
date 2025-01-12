@@ -1,1 +1,2 @@
-# Vizsgaremek_GG_DM
+# QuantumLink Kft.
+Jira: https://vizsgaremekggdm.atlassian.net/jira
