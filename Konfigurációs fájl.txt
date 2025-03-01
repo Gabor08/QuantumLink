@@ -1,0 +1,230 @@
+Raktar_Sw:
+
+ena
+clock set 12:00:00 01 mar 2025
+conf t
+host Raktar_Sw
+no ip domain-l
+ena sec quantum#
+ser pass
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+
+------------------------------------------------------
+Raktar_R:
+
+
+ena
+clock set 12:00:00 01 mar 2025
+conf t
+host Raktar_R
+no ip domain-l
+ena sec quantum#
+ser pass
+security password min-length 8
+login block-for 30 att 2 within 60
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+
+int g0/0/0
+no sh
+ip add 192.168.56.161 255.255.255.224
+desc Raktar_Sw fele
+exit
+
+int s0/1/1
+no sh
+ip add 85.61.34.50 255.255.255.248
+desc ISP_2 fele
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.41 255.255.255.248
+desc Iroda_R2 fele
+exit
+
+
+ip dhcp exc 192.168.56.162 192.168.56.170
+ip dhcp pool Raktar_pool
+network 192.168.56.160 255.255.255.224
+def 192.168.56.161
+exit
+-----------------------------------------------------------
+ISP_2:
+
+
+ena
+clock set 12:00:00 01 mar 2025
+conf t
+host ISP_2
+no ip domain-l
+ena sec quantum#
+ser pass
+security password min-length 8
+login block-for 30 att 2 within 60
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+
+int s0/1/1
+no sh
+ip add 85.61.34.49 255.255.255.248
+clock rate 4000000
+desc Raktar_R fele
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.33 255.255.255.248
+clock rate 4000000
+desc Szerver_R2 fele
+exit
+
+--------------------------------------------------------
+Szerver_R2:
+
+ena
+clock set 12:00:00 01 mar 2025
+conf t
+host Sezrver_R2
+no ip domain-l
+ena sec quantum#
+ser pass
+security password min-length 8
+login block-for 30 att 2 within 60
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.34 255.255.255.248
+desc ISP_2 fele
+exit
+
+int g0/0/0
+no sh
+ip add 192.168.56.226 255.255.255.224
+desc Szerver_ASA fele
+standby version 2
+standby 1 ip 192.168.56.254
+standby 1 priority 50
+exit
+
+int g0/0/2
+no sh
+ip add 85.61.34.25 255.255.255.248
+desc Iroda_R2 fele
+exit
+
+
+
+-------------------------------------------------------
+Szerver_R1:
+
+ena
+clock set 12:00:00 01 mar 2025
+conf t
+host Szerver_R1
+no ip domain-l
+ena sec quantum#
+ser pass
+security password min-length 8
+login block-for 30 att 2 within 60
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+
+int g0/0/0
+no sh
+ip add 192.168.56.225 255.255.255.224
+desc Szerver_ASA fele
+standby version 2
+standby 1 ip 192.168.56.254
+standby 1 priority 100
+standby 1 preempt
+exit
+
+int g0/0/2
+no sh
+ip add 85.61.34.17 255.255.255.248
+desc Iroda_R1 fele
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.10 255.255.255.248
+desc ISP_1 fele
+exit
+
+
+-------------------------------------------------------
+Szerver_Sw:
+
+ena
+clock set 12:00:00 01 mar 2025
+conf t
+host Szerver_Sw
+no ip domain-l
+ena sec quantum#
+ser pass
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
