@@ -75,7 +75,7 @@ standby 4 ip 192.168.56.158
 standby 4 priority 100
 standby 4 preempt
 int g0/0/0.192
-enc dot 192
+enc dot 192 nat
 ip add 192.168.56.193 255.255.255.224
 desc vlan 192 atjaroja
 standby ver 2
@@ -174,7 +174,7 @@ standby ver 2
 standby 4 ip 192.168.56.158
 standby 4 priority 50
 int g0/0/0.192
-enc dot 192
+enc dot 192 nat
 ip add 192.168.56.194 255.255.255.224
 desc vlan 192 atjaroja
 standby ver 2
@@ -247,14 +247,14 @@ no sh
 int port 1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int r f0/3-4
 channel-group 2 mode desirable
 no sh
 int port 2
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int r f0/5-7
 switchport mode access
 switchport access vlan 78
@@ -274,7 +274,7 @@ switchport port-security violation restrict
 int g0/1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int vlan 192
 ip add 192.168.56.195 255.255.255.224
 exit
@@ -330,14 +330,14 @@ no sh
 int port 1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int r f0/3-4
 channel-group 2 mode active
 no sh
 int port 2
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int r f0/5-8
 switchport mode access
 switchport access vlan 77
@@ -412,14 +412,14 @@ no sh
 int port 2
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int r f0/3-4
 channel-group 1 mode passive
 no sh
 int port 1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int r f0/6
 switchport mode access
 switchport access vlan 84
@@ -455,7 +455,7 @@ switchport port-security violation restrict
 int g0/1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 99
+switchport trunk native vlan 192
 int vlan 192
 ip add 192.168.56.197 255.255.255.224
 exit
