@@ -75,7 +75,7 @@ standby 4 ip 192.168.56.158
 standby 4 priority 100
 standby 4 preempt
 int g0/0/0.192
-enc dot 192 nat
+enc dot 192
 ip add 192.168.56.193 255.255.255.224
 desc vlan 192 atjaroja
 standby ver 2
@@ -95,6 +95,21 @@ int g0/0/0
 desc Sw1 fele
 no sh
 exit
+
+ip route 0.0.0.0 0.0.0.0 85.61.34.2
+
+router eigrp 7
+eigrp router-id 1.1.1.1
+no auto-summary
+redistribute static
+network 192.168.56.0 0.0.0.31
+network 192.168.56.32 0.0.0.31
+network 192.168.56.64 0.0.0.31
+network 192.168.56.96 0.0.0.31
+network 192.168.56.128 0.0.0.31
+network 192.168.56.192 0.0.0.31
+network 85.61.34.16 0.0.0.7
+
 exit
 copy run st
 
@@ -174,7 +189,7 @@ standby ver 2
 standby 4 ip 192.168.56.158
 standby 4 priority 50
 int g0/0/0.192
-enc dot 192 nat
+enc dot 192
 ip add 192.168.56.194 255.255.255.224
 desc vlan 192 atjaroja
 standby ver 2
@@ -192,6 +207,21 @@ int g0/0/0
 desc Sw3 fele
 no sh
 exit
+
+ip route 0.0.0.0 0.0.0.0 85.61.34.41
+
+router eigrp 7
+eigrp router-id 2.2.2.2
+no auto-summary
+redistribute static
+network 192.168.56.0 0.0.0.31
+network 192.168.56.32 0.0.0.31
+network 192.168.56.64 0.0.0.31
+network 192.168.56.96 0.0.0.31
+network 192.168.56.128 0.0.0.31
+network 192.168.56.192 0.0.0.31
+network 85.61.34.40 0.0.0.7
+
 exit
 copy run st
 
@@ -247,14 +277,14 @@ no sh
 int port 1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int r f0/3-4
 channel-group 2 mode desirable
 no sh
 int port 2
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int r f0/5-7
 switchport mode access
 switchport access vlan 78
@@ -274,7 +304,7 @@ switchport port-security violation restrict
 int g0/1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int vlan 192
 ip add 192.168.56.195 255.255.255.224
 exit
@@ -330,14 +360,14 @@ no sh
 int port 1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int r f0/3-4
 channel-group 2 mode active
 no sh
 int port 2
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int r f0/5-8
 switchport mode access
 switchport access vlan 77
@@ -412,14 +442,14 @@ no sh
 int port 2
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int r f0/3-4
 channel-group 1 mode passive
 no sh
 int port 1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int r f0/6
 switchport mode access
 switchport access vlan 84
@@ -455,7 +485,7 @@ switchport port-security violation restrict
 int g0/1
 switchport mode trunk
 switchport trunk allowed vlan 77,78,84,90,101,192
-switchport trunk native vlan 192
+switchport trunk native vlan 99
 int vlan 192
 ip add 192.168.56.197 255.255.255.224
 exit
@@ -468,7 +498,7 @@ copy run st
 ISP_1
 
 ena
-clock set 12:00:00 02 Mar 2025
+clock set 12:00:00 09 Mar 2025
 conf t
 host ISP_1
 login block 180 attempts 3 within 60
@@ -487,16 +517,6 @@ exec 5
 exit
 ser pass
 banner motd "Unauthorized access is prohibited!"
-ip domain-name quantum.hu
-crypto key generate rsa
-2048
-username QuantumAdmin privileg 15 secret quantum#
-username Link secret quantum#
-ip ssh ver 2
-line vty 0 15
-login local
-transport input ssh
-exit
 
 int s0/1/0
 ip add 85.61.34.2 255.255.255.248
@@ -509,5 +529,9 @@ clock rate 4000000
 desc Szerver_R1 fele
 no sh
 exit
+
+ip route 0.0.0.0 0.0.0.0 85.61.34.1
+ip route 0.0.0.0 0.0.0.0 85.61.34.10
+
 exit
 copy run st
