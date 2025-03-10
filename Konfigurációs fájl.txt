@@ -20,39 +20,6 @@ login
 exec 5
 exit
 
-ip domain name quantum.hu
-user QuantumAdmin priv 15 sec quantum#
-user Link sec quantum#
-cry key gen rsa
-2048
-ip ssh ver 2
-line vty 0 15
-login local
-transport input ssh
-exit
-
-
-int range f0/1-2
-swit mode access
-swit port-security
-swit port-security maximum 2
-swit port-security mac-address sticky
-swit port-security aging time 5
-swit port-security violation restrict 
-
-int g0/2
-swit mode access
-swit port-security
-swit port-security maximum 1
-swit port-security mac-address sticky
-swit port-security aging time 5
-swit port-security violation restrict 
-
-int vlan 1
-no sh
-ip add 192.168.56.161 255.255.255.224
-exit
-
 ------------------------------------------------------
 Raktar_R:
 
@@ -87,8 +54,14 @@ exit
 
 int s0/1/1
 no sh
-ip add 85.61.34.34 255.255.255.248
+ip add 85.61.34.50 255.255.255.248
 desc ISP_2 fele
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.41 255.255.255.248
+desc Iroda_R2 fele
 exit
 
 
@@ -96,19 +69,9 @@ ip dhcp exc 192.168.56.162 192.168.56.170
 ip dhcp pool Raktar_pool
 network 192.168.56.160 255.255.255.224
 def 192.168.56.161
-dns 192.168.56.232
 exit
 
-ip domain name quantum.hu
-user QuantumAdmin priv 15 sec quantum#
-user Link sec quantum#
-cry key gen rsa
-2048
-ip ssh ver 2
-line vty 0 15
-login local
-transport input ssh
-exit
+ip route 0.0.0.0 0.0.0.0 85.61.34.33
 -----------------------------------------------------------
 ISP_2:
 
@@ -137,17 +100,20 @@ exit
 
 int s0/1/1
 no sh
-ip add 85.61.34.33 255.255.255.248
+ip add 85.61.34.49 255.255.255.248
 clock rate 4000000
 desc Raktar_R fele
 exit
 
 int s0/1/0
 no sh
-ip add 85.61.34.41 255.255.255.248
+ip add 85.61.34.33 255.255.255.248
 clock rate 4000000
-desc Iroda_R2 fele
+desc Szerver_R2 fele
 exit
+
+ip route 0.0.0.0 0.0.0.0 85.61.34.34
+ip route 0.0.0.0 0.0.0.0 85.61.34.40
 
 --------------------------------------------------------
 Szerver_R2:
@@ -174,6 +140,12 @@ login
 exec 5
 exit
 
+int s0/1/0
+no sh
+ip add 85.61.34.34 255.255.255.248
+desc ISP_2 fele
+exit
+
 int g0/0/0
 no sh
 ip add 192.168.56.226 255.255.255.224
@@ -190,16 +162,14 @@ desc Iroda_R2 fele
 exit
 
 
-ip domain name quantum.hu
-user QuantumAdmin priv 15 sec quantum#
-user Link sec quantum#
-cry key gen rsa
-2048
-ip ssh ver 2
-line vty 0 15
-login local
-transport input ssh
-exit
+router eigrp 7
+eigrp router-id 4.4.4.4
+no auto-summary
+network 192.168.56.224 0.0.0.31
+network 85.61.34.24 0.0.0.7
+
+
+
 -------------------------------------------------------
 Szerver_R1:
 
@@ -247,16 +217,15 @@ ip add 85.61.34.10 255.255.255.248
 desc ISP_1 fele
 exit
 
-ip domain name quantum.hu
-user QuantumAdmin priv 15 sec quantum#
-user Link sec quantum#
-cry key gen rsa
-2048
-ip ssh ver 2
-line vty 0 15
-login local
-transport input ssh
-exit
+ip route 0.0.0.0 0.0.0.0 85.61.34.9
+
+router eigrp 7
+eigrp router-id 3.3.3.3
+no auto-summary
+redist static
+network 192.168.56.224 0.0.0.31
+network 85.61.34.16 0.0.0.7
+
 -------------------------------------------------------
 Szerver_Sw:
 
@@ -278,38 +247,4 @@ line vty 0 15
 pass quantum#
 login
 exec 5
-exit
-
-ip domain name quantum.hu
-user QuantumAdmin priv 15 sec quantum#
-user Link sec quantum#
-cry key gen rsa
-2048
-ip ssh ver 2
-line vty 0 15
-login local
-transport input ssh
-exit
-
-
-int range f0/2-3, g0/1-2
-swit mode access
-swit port-security
-swit port-security maximum 2
-swit port-security mac-address sticky
-swit port-security aging time 5
-swit port-security violation restrict 
-
-int f0/1
-swit mode access
-swit port-security
-swit port-security maximum 1
-swit port-security mac-address sticky
-swit port-security aging time 5
-swit port-security violation restrict 
-
-
-int vlan 1
-no sh
-ip add 192.168.56.228 255.255.255.224
 exit
