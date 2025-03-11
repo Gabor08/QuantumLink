@@ -20,6 +20,16 @@ login
 exec 5
 exit
 
+spanning-tree mode rapid-pvst
+spanning-tree portfast default 
+
+interface vlan 1
+ip add 192.168.56.162 255.255.255.224
+no sh
+desc vlan 1 atjarora
+exit
+
+ip default-gateway 192.168.56.161
 ------------------------------------------------------
 Raktar_R:
 
@@ -72,6 +82,38 @@ def 192.168.56.161
 exit
 
 ip route 0.0.0.0 0.0.0.0 85.61.34.33
+
+crypto isakmp policy 17
+authentication pre-share
+encryption aes
+group 2 
+hash md5
+lifetime 86400
+exit
+
+crypto isakmp key quantum address 85.61.34.42
+crypto ipsec transform-set quantumset esp-aes 
+
+access-list 100 permit ip 192.168.56.160 0.0.0.31 192.168.56.0 0.0.0.31
+access-list 100 permit ip 192.168.56.160 0.0.0.31 192.168.56.64 0.0.0.31
+access-list 100 permit ip 192.168.56.160 0.0.0.31 192.168.56.96 0.0.0.31
+access-list 100 permit ip 192.168.56.160 0.0.0.31 192.168.56.128 0.0.0.31
+access-list 100 permit ip 192.168.56.160 0.0.0.31 192.168.56.192 0.0.0.31
+
+crypto map quantummap 17 ipsec-isakmp
+desc VPN to Iroda_R2
+set peer 85.61.34.42
+set transform-set quantumset
+match address 100
+exit
+
+int s0/1/1
+crypto map quantummap
+exit
+
+
+
+
 -----------------------------------------------------------
 ISP_2:
 
