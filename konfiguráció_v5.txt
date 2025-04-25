@@ -1,0 +1,1279 @@
+Iroda_R
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Iroda_R
+login block 180 attempts 3 within 60
+security passwords min-length 8
+ena sec quantum#
+no ip domain-lookup
+lin con 0
+pass quantum#
+login
+logg synch
+exec 5
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+ser pass
+banner motd "Unauthorized access is prohibited!"
+no cdp run
+
+ipv6 uni
+
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+
+ipv6 dhcp pool ugyfelszolgalat
+address prefix 2001:db8:acad:78::/64
+dns-server 2001:db8:acad:b::5
+domain-name quantum.hu
+exit
+ipv6 dhcp pool rendelesek
+address prefix 2001:db8:acad:77::/64
+dns-server 2001:db8:acad:b::5
+domain-name quantum.hu
+exit
+ipv6 dhcp pool RG
+address prefix 2001:db8:acad:84::/64
+dns-server 2001:db8:acad:b::5
+domain-name quantum.hu
+exit
+ipv6 dhcp pool vezetoseg
+address prefix 2001:db8:acad:90::/64
+dns-server 2001:db8:acad:b::5
+domain-name quantum.hu
+exit
+
+int s0/1/0
+ip add 85.61.34.26 255.255.255.248
+ipv6 add 2001:db8:cafe:4::2/64
+desc EXIT_NY fele
+no sh
+
+int s0/1/1
+ip add 85.61.34.34 255.255.255.248
+ipv6 add 2001:db8:cafe:5::2/64
+desc EXIT_K fele
+no sh
+
+int g0/0/0.77
+enc dot 77
+ip add 192.168.56.65 255.255.255.224
+ipv6 add 2001:db8:acad:77::1/64
+ip helper 192.168.56.198
+ipv6 dhcp server rendelesek
+ipv6 nd m
+desc vlan 77 atjaroja
+
+int g0/0/0.78
+enc dot 78
+ip add 192.168.56.161 255.255.255.224
+ipv6 add 2001:db8:acad:78::1/64
+ip helper 192.168.56.198
+ipv6 dhcp server ugyfelszolgalat
+ipv6 nd m
+desc vlan 78 atjaroja
+
+int g0/0/0.84
+enc dot 84
+ip add 192.168.56.97 255.255.255.224
+ipv6 add 2001:db8:acad:84::1/64
+ip helper 192.168.56.198
+ipv6 dhcp server RG
+ipv6 nd m
+desc vlan 84 atjaroja
+
+int g0/0/0.90
+enc dot 90
+ip add 192.168.56.129 255.255.255.224
+ipv6 add 2001:db8:acad:90::1/64
+ip helper 192.168.56.198
+ipv6 dhcp server vezetoseg
+ipv6 nd m
+desc vlan 90 atjaroja
+
+int g0/0/0.192
+enc dot 192 nat
+ip add 192.168.56.193 255.255.255.224
+ipv6 add 2001:db8:acad:192::1/64
+desc vlan 192 atjaroja
+
+int g0/0/0.101
+enc dot 101
+ip add 192.168.56.33 255.255.255.224
+ipv6 add 2001:db8:acad:101::1/64
+ip helper 192.168.56.198
+desc vlan 101 atjaroja
+
+int g0/0/0
+desc Iroda_Sw1 fele
+no sh
+exit
+
+router ospf 7
+router-id 1.1.1.1
+no passive-int g0/0/0
+network 192.168.56.160 0.0.0.31 area 1
+network 192.168.56.32 0.0.0.31 area 1
+network 192.168.56.64 0.0.0.31 area 1
+network 192.168.56.96 0.0.0.31 area 1
+network 192.168.56.128 0.0.0.31 area 1
+network 192.168.56.192 0.0.0.31 area 1
+network 85.61.34.24 0.0.0.7 area 0
+network 85.61.34.32 0.0.0.7 area 0
+exit
+
+ip route 0.0.0.0 0.0.0.0 85.61.34.2
+
+ipv6 router eigrp 8
+eigrp router-id 1.1.1.1
+no shutdown
+passive-int g0/0/0
+exit
+
+int s0/1/0
+ipv6 eigrp 8
+int g0/0/0.77
+ipv6 eigrp 8
+int g0/0/0.78
+ipv6 eigrp 8
+int g0/0/0.84
+ipv6 eigrp 8
+int g0/0/0.90
+ipv6 eigrp 8
+int s0/1/1
+ipv6 eigrp 8
+exit
+
+crypto isakmp policy 17
+authentication pre-share
+encryption aes
+group 2
+hash md5
+lifetime 86400
+exit
+
+crypto isakmp key quantum address 85.61.34.50
+crypto ipsec transform-set quantumset esp-aes esp-md5-hmac
+
+access-list 100 permit ip 192.168.56.160 0.0.0.31 192.168.56.0 0.0.0.31
+access-list 100 permit ip 192.168.56.64 0.0.0.31 192.168.56.0 0.0.0.31
+access-list 100 permit ip 192.168.56.96 0.0.0.31 192.168.56.0 0.0.0.31
+access-list 100 permit ip 192.168.56.128 0.0.0.31 192.168.56.0 0.0.0.31
+access-list 100 permit ip 192.168.56.192 0.0.0.31 192.168.56.0 0.0.0.31
+
+crypto map quantummap 17 ipsec-isakmp
+desc VPN to Raktar_R
+set peer 85.61.34.50
+set transform-set quantumset
+match address 100
+exit
+
+int s0/1/0
+crypto map quantummap
+exit
+
+int tunnel0
+ip add 172.16.10.1 255.255.255.252
+tunnel source s0/1/1
+tunnel dest 85.61.34.50
+tunnel mode gre ip
+exit
+
+ip route 192.168.56.0 255.255.255.224 172.16.10.2
+
+username EXIT_NY password quantum#
+username EXIT_K password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username Iroda_R password quantum#
+ppp authentication pap
+int s0/1/1
+encapsulation ppp
+ppp pap sent-username Iroda_R password quantum#
+ppp authentication pap
+exit
+
+access-list 1 permit 192.168.56.96 0.0.0.31
+access-list 1 permit 192.168.56.64 0.0.0.31
+access-list 1 permit 192.168.56.128 0.0.0.31
+access-list 1 permit 192.168.56.160 0.0.0.31
+ip nat inside source list 1 interface s0/1/0 overload
+
+int g0/0/0.84
+ip nat inside
+int g0/0/0.90
+ip nat inside
+int g0/0/0.77
+ip nat inside
+int g0/0/0.78
+ip nat inside
+int g0/0/0
+ip nat inside
+int s0/1/0
+ip nat outside
+exit
+
+exit
+copy run st
+
+
+----------------------------------------
+
+Sw1
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Iroda_Sw1
+ena sec quantum#
+no ip domain-lookup
+lin con 0
+pass quantum#
+login
+logg synch
+exec 5
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+ser pass
+banner motd "Unauthorized access is prohibited!"
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+no cdp run
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+
+vlan 77
+name Rendelesek
+vlan 78
+name Ugyfelszolgalat
+vlan 84
+name RG
+vlan 90
+name Vezetoseg
+vlan 101
+name Nyomtatok
+vlan 192
+name Management
+vlan 665
+name Unused
+
+int r f0/8-24,g0/2
+sh
+switchport mode access
+switchport access vlan 665
+exit
+
+int r f0/1-2
+channel-group 1 mode active
+no sh
+int port 1
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int r f0/3-4
+channel-group 2 mode desirable
+no sh
+int port 2
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int r f0/5-7
+switchport mode access
+switchport access vlan 78
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int g0/1
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int vlan 192
+ip add 192.168.56.195 255.255.255.224
+exit
+ip default-gateway 192.168.56.193
+
+vtp mode server
+vtp domain quantum.hu
+vtp password quantum#
+vtp ver 2
+
+exit
+copy run st
+
+----------------------------------------
+
+Sw2
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Iroda_Sw2
+ena sec quantum#
+no ip domain-lookup
+lin con 0
+pass quantum#
+login
+logg synch
+exec 5
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+ser pass
+banner motd "Unauthorized access is prohibited!"
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+no cdp run
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+
+
+vtp mode client
+vtp domain quantum.hu
+vtp password quantum#
+
+int r f0/10-24
+sh
+switchport mode access
+switchport access vlan 665
+exit
+
+int r f0/1-2
+channel-group 1 mode passive
+no sh
+int port 1
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int r f0/3-4
+channel-group 2 mode active
+no sh
+int port 2
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int r f0/5-8
+switchport mode access
+switchport access vlan 77
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int f0/9
+switchport mode access
+switchport access vlan 101
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int g0/1
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport port-security
+switchport port-security maximum 1
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int g0/2
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport port-security
+switchport port-security maximum 15
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int vlan 192
+ip add 192.168.56.196 255.255.255.224
+exit
+ip default-gateway 192.168.56.193
+exit
+copy run st
+
+-----------------------------------------
+
+Sw3
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Iroda_Sw3
+ena sec quantum#
+no ip domain-lookup
+lin con 0
+pass quantum#
+login
+logg synch
+exec 5
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+ser pass
+banner motd "Unauthorized access is prohibited!"
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+no cdp run
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+
+vtp mode client
+vtp domain quantum.hu
+vtp password quantum#
+
+int r f0/10-24,g0/1-2
+sh
+switchport mode access
+switchport access vlan 665
+exit
+
+int r f0/1-2
+channel-group 2 mode auto
+no sh
+int port 2
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int r f0/3-4
+channel-group 1 mode passive
+no sh
+int port 1
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int f0/6
+switchport mode access
+switchport access vlan 84
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int r f0/7-8
+switchport mode access
+switchport access vlan 101
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int f0/5
+switchport mode access
+switchport access vlan 192
+switchport port-security
+switchport port-security maximum 1
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int f0/9
+switchport mode access
+switchport access vlan 90
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+switchport port-security violation restrict
+switchport nonegotiate
+int g0/1
+switchport mode trunk
+switchport trunk allowed vlan 77,78,84,90,101,192
+switchport trunk native vlan 192
+switchport nonegotiate
+int vlan 192
+ip add 192.168.56.197 255.255.255.224
+exit
+ip default-gateway 192.168.56.193
+
+exit
+copy run st
+
+---------------------------------------------
+
+ISP_1
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host ISP_1
+ena sec quantum#
+no ip domain-lookup
+banner motd "Unauthorized access is prohibited!"
+ipv6 uni
+
+int s0/1/0
+ip add 85.61.34.1 255.255.255.248
+ipv6 add 2001:db8:cafe:1::1/64
+desc Szerver_R1 fele
+clock rate 4000000
+no sh
+int s0/1/1
+ip add 85.61.34.9 255.255.255.248
+ipv6 add 2001:db8:cafe:2::1/64
+desc EXIT_NY fele
+no sh
+clock rate 4000000
+int s0/2/0
+ip add 85.61.34.17 255.255.255.248
+ipv6 add 2001:db8:cafe:3::1/64
+desc Szerver_R2 fele
+no sh
+clock rate 4000000
+exit
+
+router ospf 7
+router-id 5.5.5.5
+network 85.61.34.0 0.0.0.7 area 0
+network 85.61.34.8 0.0.0.7 area 0
+network 85.61.34.16 0.0.0.7 area 0
+default-information originate
+exit
+
+ip route 0.0.0.0 0.0.0.0 85.61.34.2
+
+ipv6 router eigrp 8
+eigrp router-id 5.5.5.5
+no shutdown
+exit
+
+int s0/1/0
+ipv6 eigrp 8
+int s0/1/1
+ipv6 eigrp 8
+int s0/2/0
+ipv6 eigrp 8
+exit
+
+username Szerver_R1 password quantum#
+username Szerver_R2 password quantum#
+username EXIT_NY password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username ISP_1 password quantum#
+ppp authentication pap
+int s0/1/1
+encapsulation ppp
+ppp pap sent-username ISP_1 password quantum#
+ppp authentication pap
+int s0/2/0
+encapsulation ppp
+ppp pap sent-username ISP_1 password quantum#
+ppp authentication pap
+exit
+
+exit
+copy run st
+
+---------------------------------------------
+
+Raktar_Sw:
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Raktar_Sw
+no ip domain-l
+ena sec quantum#
+ser pass
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+no cdp run
+
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+
+int vlan1
+ip add 192.168.56.2 255.255.255.224
+no sh
+exit
+
+ip default-gateway 192.168.56.1
+------------------------------------------------------
+Raktar_R:
+
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Raktar_R
+no ip domain-l
+ena sec quantum#
+ser pass
+security password min-length 8
+login block-for 30 att 2 within 60
+banner motd "Unauthorized access is prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+no cdp run
+
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+
+ipv6 uni
+
+int g0/0/0
+no sh
+ip add 192.168.56.161 255.255.255.224
+ipv6 add 2001:db8:acad:a::1/64
+desc Raktar_Sw fele
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.50 255.255.255.248
+ipv6 add 2001:db8:cafe:7::2/64
+desc ISP_2 fele
+exit
+
+router ospf 7
+router-id 8.8.8.8
+network 85.61.34.48 0.0.0.7 area 0
+network 85.61.34.56 0.0.0.7 area 0
+exit
+
+ipv6 router eigrp 8
+eigrp router-id 8.8.8.8
+no shutdown
+passive-int g0/0/0
+exit
+
+int s0/1/0
+ipv6 eigrp 8
+int g0/0/0 
+ipv6 eigrp 8
+exit
+
+crypto isakmp policy 17
+authentication pre-share
+encryption aes
+group 2
+hash md5
+lifetime 86400
+exit
+
+crypto isakmp key quantum address 85.61.34.34
+crypto ipsec transform-set quantumset esp-aes esp-md5-hmac
+
+access-list 100 permit ip 192.168.56.0 0.0.0.31 192.168.56.160 0.0.0.31
+access-list 100 permit ip 192.168.56.0 0.0.0.31 192.168.56.64 0.0.0.31
+access-list 100 permit ip 192.168.56.0 0.0.0.31 192.168.56.96 0.0.0.31
+access-list 100 permit ip 192.168.56.0 0.0.0.31 192.168.56.128 0.0.0.31
+access-list 100 permit ip 192.168.56.0 0.0.0.31 192.168.56.192 0.0.0.31
+
+crypto map quantummap 17 ipsec-isakmp
+desc VPN to Iroda_R
+set peer 85.61.34.34
+set transform-set quantumset
+match address 100
+exit
+
+int s0/1/0
+crypto map quantummap
+exit
+
+int tunnel0
+ip add 172.16.10.2 255.255.255.252
+tunnel source s0/1/1
+tunnel dest 85.61.34.34
+tunnel mode gre ip
+exit
+
+ip route 192.168.56.160 255.255.255.224 172.16.10.1
+ip route 192.168.56.64 255.255.255.224 172.16.10.1
+ip route 192.168.56.96 255.255.255.224 172.16.10.1
+ip route 192.168.56.128 255.255.255.224 172.16.10.1
+ip route 192.168.56.192 255.255.255.224 172.16.10.1
+
+username ISP_2 password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username Raktar_R password quantum#
+ppp authentication pap
+exit
+
+-----------------------------------------------------------
+ISP_2:
+
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host ISP_2
+no ip domain-l
+ena sec quantum#
+banner motd "Unauthorized Access Is Prohibited"
+
+ipv6 uni
+
+int s0/1/0
+no sh
+ip add 85.61.34.49 255.255.255.248
+ipv6 add 2001:db8:cafe:7::1/64
+desc Raktar_R fele
+clock rate 4000000
+int s0/1/1
+ip add 85.61.34.41 255.255.255.248
+ipv6 add 2001:db8:cafe:6::1/64
+desc EXIT_K fele
+no sh
+clock rate 4000000
+exit
+
+router ospf 7
+router-id 4.4.4.4
+network 85.61.34.40 0.0.0.7 area 0
+network 85.61.34.48 0.0.0.7 area 0
+exit
+ip route 0.0.0.0 0.0.0.0 85.61.34.50
+
+ipv6 router eigrp 8
+eigrp router-id 4.4.4.4
+no shutdown
+exit
+
+int s0/1/0
+ipv6 eigrp 8
+int s0/1/1
+ipv6 eigrp 8
+exit
+
+username EXIT_K password quantum#
+username Raktar_R password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username ISP_2 password quantum#
+ppp authentication pap
+int s0/1/1
+encapsulation ppp
+ppp pap sent-username ISP_2 password quantum#
+ppp authentication pap
+exit
+
+--------------------------------------------------------
+Szerver_R2:
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Szerver_R2
+no ip domain-l
+ena sec quantum#
+ser pass
+security password min-length 8
+login block-for 30 att 2 within 60
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+no cdp run
+
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+
+ipv6 uni
+
+int g0/0/0
+no sh
+ip add 192.168.56.226 255.255.255.224
+ipv6 add 2001:db8:acad:b::2/64
+desc Szerver_ASA fele
+standby version 2
+standby 1 ip 192.168.56.254
+standby 1 priority 50
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.18 255.255.255.248
+ipv6 add 2001:db8:cafe:3::2/64
+desc ISP_1 fele
+exit
+
+ip dhcp excluded-address 192.168.56.225 192.168.56.235
+
+ip dhcp pool szerver_dhcp
+network 192.168.56.224 255.255.255.224
+default-router 192.168.56.254
+dns-server 192.168.56.233
+domain-name quantum.hu
+exit
+
+router ospf 7
+router-id 7.7.7.7
+network 192.168.56.224 0.0.0.31 area 2
+network 85.61.34.16 0.0.0.7 area 0
+passive-int g0/0/0
+exit
+
+ipv6 router eigrp 8
+eigrp router-id 7.7.7.7
+no shutdown
+passive-int g0/0/0
+exit
+
+int s0/1/0
+ipv6 eigrp 8
+int g0/0/0
+ipv6 eigrp 8
+exit
+
+ip access-list standard 1
+deny 192.168.56.32 0.0.0.31
+deny 192.168.56.192 0.0.0.31
+permit 192.168.56.0 0.0.0.255
+permit 85.61.34.26 0.0.0.0
+exit
+
+int g0/0/0
+ip access-group 1 out
+exit
+
+ip nat inside source static 192.168.56.233 209.105.64.11
+
+int s0/1/0
+ip nat outside
+int g0/0/0
+ip nat inside
+exit
+
+username ISP_1 password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username Szerver_R2 password quantum#
+ppp authentication pap
+exit
+
+-------------------------------------------------------
+Szerver_R1:
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Szerver_R1
+no ip domain-l
+ena sec quantum#
+ser pass
+security password min-length 8
+login block-for 30 att 2 within 60
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+no cdp run
+
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+
+ipv6 uni
+
+int g0/0/0
+no sh
+ip add 192.168.56.225 255.255.255.224
+ipv6 add 2001:db8:acad:b::1/64
+desc Szerver_ASA fele
+standby version 2
+standby 1 ip 192.168.56.254
+standby 1 priority 100
+standby 1 preempt
+exit
+
+int s0/1/0
+no sh
+ip add 85.61.34.2 255.255.255.248
+ipv6 add 2001:db8:cafe:1::2/64
+desc ISP_1 fele
+exit
+
+ip dhcp excluded-address 192.168.56.225 192.168.56.235
+
+ip dhcp pool szerver_dhcp
+network 192.168.56.224 255.255.255.224
+default-router 192.168.56.254
+dns-server 192.168.56.233
+domain-name quantum.hu
+exit
+
+router ospf 7
+router-id 6.6.6.6
+network 192.168.56.224 0.0.0.31 area 2
+network 85.61.34.0 0.0.0.7 area 0
+exit
+
+ipv6 router eigrp 8
+eigrp router-id 6.6.6.6
+no shutdown
+passive-int g0/0/0
+exit
+
+int s0/1/0
+ipv6 eigrp 8
+int g0/0/0
+ipv6 eigrp 8
+exit
+
+ip access-list standard 1
+deny 192.168.56.32 0.0.0.31
+deny 192.168.56.192 0.0.0.31
+permit 192.168.56.0 0.0.0.255
+permit 85.61.34.26 0.0.0.0
+exit
+
+int g0/0/0
+ip access-group 1 out
+exit
+
+ip nat inside source static 192.168.56.233 209.105.64.11
+
+int g0/0/2
+ip nat outside
+int g0/0/0
+ip nat inside
+exit
+
+username ISP_1 password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username Szerver_R1 password quantum#
+ppp authentication pap
+exit
+
+
+-------------------------------------------------------
+Szerver_Sw:
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host Szerver_Sw
+no ip domain-l
+ena sec quantum#
+ser pass
+banner motd "Unauthorized Access Is Prohibited"
+line con 0
+pass quantum#
+login
+logg syn
+exec 5
+exit
+line vty 0 15
+pass quantum#
+login
+exec 5
+exit
+ip domain-name quantum.hu
+crypto key generate rsa
+2048
+username QuantumAdmin privileg 15 secret quantum#
+username Link secret quantum#
+ip ssh ver 2
+line vty 0 15
+login local
+transport input ssh
+exit
+no cdp run
+
+int vlan 1
+ip add 192.168.56.230 255.255.255.224
+no sh
+exit
+
+ip default-gateway 192.168.56.254
+
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+
+-------------------------------------------------------
+
+EXIT_NY
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host EXIT_NY
+ena sec quantum#
+no ip domain-lookup
+banner motd "Unauthorized access is prohibited!"
+ipv6 uni
+no cdp run
+
+int s0/1/0
+ip add 85.61.34.25 255.255.255.248
+ipv6 add 2001:db8:cafe:4::1/64
+desc Iroda_R1 fele
+no sh
+clock rate 4000000
+int s0/1/1
+ip add 85.61.34.10 255.255.255.248
+ipv6 add 2001:db8:cafe:2::2/64
+desc ISP_1 fele
+no sh
+exit
+
+router ospf 7
+router-id 2.2.2.2
+network 85.61.34.24 0.0.0.7 area 0
+network 85.61.34.8 0.0.0.7 area 0
+exit
+
+
+ipv6 router eigrp 8
+eigrp router-id 2.2.2.2
+no shutdown
+exit
+
+int s0/1/0
+ipv6 eigrp 8
+int s0/1/1
+ipv6 eigrp 8
+exit
+
+username Iroda_R password quantum#
+username ISP_1 password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username EXIT_NY password quantum#
+ppp authentication pap
+int s0/1/1
+encapsulation ppp
+ppp pap sent-username EXIT_NY password quantum#
+ppp authentication pap
+exit
+exit
+copy run st
+
+----------------------------------------------------------
+
+EXIT_K
+
+ena
+clock set 12:00:00 30 Mar 2025
+conf t
+host EXIT_K
+ena sec quantum#
+no ip domain-lookup
+banner motd "Unauthorized access is prohibited!"
+no cdp run
+
+ipv6 uni
+
+int s0/1/0
+ip add 85.61.34.33 255.255.255.248
+ipv6 add 2001:db8:cafe:5::1/64
+desc Iroda_R1 fele
+no sh
+clock rate 4000000
+int s0/1/1
+ip add 85.61.34.42 255.255.255.248
+ipv6 add 2001:db8:cafe:6::2/64
+desc ISP_2 fele
+no sh
+exit
+
+router ospf 7
+router-id 6.6.6.6
+network 85.61.34.32 0.0.0.7 area 0
+network 85.61.34.40 0.0.0.7 area 0
+exit
+
+ipv6 router eigrp 8
+eigrp router-id 6.6.6.6
+no shutdown
+exit
+
+int s0/1/1
+ipv6 eigrp 8
+int s0/1/0
+ipv6 eigrp 8
+exit
+
+username Iroda_R password quantum#
+username ISP_2 password quantum#
+
+int s0/1/0
+encapsulation ppp
+ppp pap sent-username EXIT_K password quantum#
+ppp authentication pap
+int s0/1/1
+encapsulation ppp
+ppp pap sent-username EXIT_K password quantum#
+ppp authentication pap
+exit
+
+-------------------------------------------------
+
+Raktar_ASA
+
+ena
+conf t
+
+hostname Raktar-ASA
+domain-name quantum.hu
+enable password quantum#
+clock set 12:00:00 09 Apr 2025
+
+int g1/1
+nameif OUTSIDE
+ip add 85.61.34.58 255.255.255.248
+security-level 0
+no sh
+int g1/2
+nameif INSIDE
+ip add 192.168.56.1 255.255.255.224
+security-level 100
+no sh
+exit
+
+conf t
+router ospf 7
+router-id 9.9.9.9
+network 192.168.56.0 255.255.255.224 area 3
+network 85.61.34.56 255.255.255.248 area 0
+exit
+
+conf t
+username QuantumAdmin password quantum#
+aaa auth ssh console LOCAL
+crypto key generate rsa modulus 2048
+ssh 192.168.56.10 255.255.255.255 INSIDE
+ssh 192.168.56.96 255.255.255.224 OUTSIDE
+
+access-list QUANTUM_SUBNETS extended permit ip any any
+access-list QUANTUM_SUBNETS extended permit icmp any any
+access-group QUANTUM_SUBNETS in interface OUTSIDE
