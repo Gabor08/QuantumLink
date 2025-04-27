@@ -1,0 +1,18 @@
+[megosztas]
+   path = /home/mark/megosztas
+   available = yes
+   valid users = @users
+   read only = no
+   browseable = yes
+   public = yes
+   writeable = yes
+
+smbclient -L localhost -U mark
+
+sudo apt install realmd sssd sssd-tools libnss-sss libpam-sss adcli samba-common-bin oddjob oddjob-mkhomedir packagekit -y
+
+realm discover quantum.hu
+
+realm join --user=Rendszergazda quantum.hu
+
+0 0 * * * smbclient // 192.168.56.233/backup Admin1234 -U Rendszergazda -c 'prompt OFF; recurse ON; mput /home/mark/megosztas/*'
