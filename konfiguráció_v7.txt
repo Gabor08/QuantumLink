@@ -940,14 +940,6 @@ ipv6 add 2001:db8:cafe:3::2/64
 desc ISP_1 fele
 exit
 
-ip dhcp excluded-address 192.168.56.225 192.168.56.235
-
-ip dhcp pool szerver_dhcp
-network 192.168.56.224 255.255.255.224
-default-router 192.168.56.254
-dns-server 192.168.56.233
-domain-name quantum.hu
-exit
 
 router ospf 7
 router-id 7.7.7.7
