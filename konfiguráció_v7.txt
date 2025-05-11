@@ -1092,7 +1092,7 @@ exit
 
 ip nat inside source static 192.168.56.233 209.105.64.11
 
-int g0/0/2
+int s0/1/0
 ip nat outside
 int g0/0/0
 ip nat inside
