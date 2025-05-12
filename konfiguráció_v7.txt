@@ -964,8 +964,7 @@ exit
 ip access-list standard 1
 deny 192.168.56.32 0.0.0.31
 deny 192.168.56.192 0.0.0.31
-permit 192.168.56.0 0.0.0.255
-permit 85.61.34.26 0.0.0.0
+permit any
 exit
 
 int g0/0/0
@@ -1075,8 +1074,7 @@ exit
 ip access-list standard 1
 deny 192.168.56.32 0.0.0.31
 deny 192.168.56.192 0.0.0.31
-permit 192.168.56.0 0.0.0.255
-permit 85.61.34.26 0.0.0.0
+permit any
 exit
 
 int g0/0/0
